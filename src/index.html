@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meteo</title>
+    
+</head>
+<body>
+    <h2>Meteorología</h2>
+    <select id="provinces">
+        <option value="selecciona">Elige una provincia</option>
+    </select>
+
+    <h2 id="weather">El Tiempo</h2>
+    <h3>Previsión para hoy</h3>
+    <div id="today">
+    </div>
+    
+    <h3>Previsión para mañana</h3>
+    <div id="tomorrow">
+
+    </div>
+
+
+    <script>
+        let provinces = document.getElementById("provinces");
+        let today = document.getElementById("today");
+        let tomorrow = document.getElementById("tomorrow");
+        let weather = document.getElementById("weather");
+
+
+
+        //POSTMAN
+        //Listado de provincias
+        async function fetchProvinces() {
+    try {
+        let url = "https://www.el-tiempo.net/api/json/v2/provincias";
+       
+        var requestOptions = {
+            method: 'GET',
+            redirect: 'follow'
+        };
+
+        let response = await fetch(url, requestOptions);
+        let json = await response.json();
+
+        // Acceder a la lista de provincias
+        let provincias = json.provincias;
+
+        // Iterar sobre las provincias
+        provincias.forEach(provincia => {
+            let op = document.createElement("option");
+            op.value = provincia.CODPROV;
+            op.innerText = provincia.NOMBRE_PROVINCIA;
+            provinces.append(op);
+           
+        });
+
+         // Agregar un evento de cambio al desplegable
+         provinces.addEventListener("change", () => {
+                    // Cuando se selecciona una provincia, aquí puedes llamar a una función para modificar la información de hoy y mañana
+                    // Puedes acceder al valor seleccionado con provinciasSelect.value
+                    let selectedPorvince = provinces.value;
+                    
+                    // Aquí deberías llamar a una función para actualizar la información según la provincia seleccionada
+                    updateData(selectedPorvince);
+                });
+
+    } catch (error) {
+        console.log('Error:', error);
+    }
+}
+
+    //Datos de hoy y de mañana
+    async function fetchData() {
+        try {
+            let url = "https://www.el-tiempo.net/api/json/v2/home";
+        
+            var requestOptions = {
+                method: 'GET',
+                redirect: 'follow'
+            };
+
+            let response = await fetch(url, requestOptions);
+            let json = await response.json();
+
+            let todayResponse = json.today.p;
+            let tomorrowResponse = json.tomorrow.p;
+
+            
+            todayResponse.forEach(data => {
+                let p = document.createElement("p");
+                p.innerHTML = data;
+                p.setAttribute("name","todayParragraph");
+                today.append(p);
+            
+            });
+
+            tomorrowResponse.forEach(data => {
+                let p = document.createElement("p");
+                p.innerHTML = data;
+                p.setAttribute("name","tomorrowParragraph");
+                tomorrow.append(p);
+            
+            });
+
+
+
+
+        } catch (error) {
+            console.log('Error:', error);
+        }
+    }
+
+    async function updateData(selectedPorvince){
+        try {
+        let url = "https://www.el-tiempo.net/api/json/v2/provincias/" + selectedPorvince;
+       
+        var requestOptions = {
+            method: 'GET',
+            redirect: 'follow'
+        };
+
+        let response = await fetch(url, requestOptions);
+        let json = await response.json();
+
+        
+        weather.innerHTML = "";
+        weather.innerText = json.title;
+        let pToday = document.getElementsByName("todayParragraph");
+        let pTomorrow = document.getElementsByName("tomorrowParragraph");
+        let todayJson = json.today.p;
+        let tomorrowJson = json.tomorrow.p;
+
+        //Elimino la información que había antes en today
+        pToday.forEach(e => {e.innerHTML = ""});
+        //Añado la nueva info
+        pToday[0].innerHTML = todayJson;
+
+        pTomorrow.forEach(e => {e.innerHTML = ""});
+        pTomorrow[0].innerHTML = tomorrowJson;
+        
+
+    } catch (error) {
+        console.log('Error:', error);
+    }
+    }
+
+
+    // Llama a la función para obtener y mostrar los datos
+    fetchProvinces();
+    fetchData();
+
+        
+    </script>
+</body>
+</html>
