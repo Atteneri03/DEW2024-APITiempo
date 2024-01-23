@@ -8,9 +8,12 @@
 </head>
 <body>
     <h2>Meteorología</h2>
-    <select id="provinces">
-        <option value="selecciona">Elige una provincia</option>
-    </select>
+    <div name = "selects">
+        <select id="provinces">
+            <option value="selecciona">Elige una provincia</option>
+        </select>
+    </div>
+    
 
     <h2 id="weather">El Tiempo</h2>
     <h3>Previsión para hoy</h3>
@@ -25,11 +28,16 @@
 
     <script>
         let provinces = document.getElementById("provinces");
+        let municipios = document.getElementById("municipios");
+
         let today = document.getElementById("today");
         let tomorrow = document.getElementById("tomorrow");
         let weather = document.getElementById("weather");
 
-
+        var requestOptions = {
+                method: 'GET',
+                redirect: 'follow'
+            };
 
         //POSTMAN
         //Listado de provincias
@@ -37,11 +45,7 @@
     try {
         let url = "https://www.el-tiempo.net/api/json/v2/provincias";
        
-        var requestOptions = {
-            method: 'GET',
-            redirect: 'follow'
-        };
-
+    
         let response = await fetch(url, requestOptions);
         let json = await response.json();
 
@@ -64,7 +68,12 @@
                     let selectedPorvince = provinces.value;
                     
                     // Aquí deberías llamar a una función para actualizar la información según la provincia seleccionada
-                    updateData(selectedPorvince);
+                    updateDataProvince(selectedPorvince);
+                    if(document.getElementById("municipios")){
+                        deleteMunicipios(selectedPorvince);
+                    } else {
+                        addMunicipios(selectedPorvince);
+                    }
                 });
 
     } catch (error) {
@@ -76,12 +85,7 @@
     async function fetchData() {
         try {
             let url = "https://www.el-tiempo.net/api/json/v2/home";
-        
-            var requestOptions = {
-                method: 'GET',
-                redirect: 'follow'
-            };
-
+    
             let response = await fetch(url, requestOptions);
             let json = await response.json();
 
@@ -113,15 +117,11 @@
         }
     }
 
-    async function updateData(selectedPorvince){
+    async function updateDataProvince(selectedPorvince){
         try {
         let url = "https://www.el-tiempo.net/api/json/v2/provincias/" + selectedPorvince;
        
-        var requestOptions = {
-            method: 'GET',
-            redirect: 'follow'
-        };
-
+    
         let response = await fetch(url, requestOptions);
         let json = await response.json();
 
@@ -140,6 +140,87 @@
 
         pTomorrow.forEach(e => {e.innerHTML = ""});
         pTomorrow[0].innerHTML = tomorrowJson;
+        
+
+    } catch (error) {
+        console.log('Error:', error);
+    }
+    }
+
+    async function addMunicipios(selectedProvince){
+        try {
+            let url = "https://www.el-tiempo.net/api/json/v2/provincias/" + selectedProvince + "/municipios";
+        
+            
+
+            let response = await fetch(url, requestOptions);
+            let json = await response.json();
+
+           let municipiosJson = json.municipios;
+           let div = document.getElementsByName("selects")[0];
+           let select = document.createElement("select");
+           select.setAttribute("id","municipios");
+           div.appendChild(select);
+
+           municipiosJson.forEach(municipio => {
+
+             let op = document.createElement("option");
+             op.value = municipio.COD_GEO;
+             op.innerText = municipio.NOMBRE;
+             select.append(op);
+           });
+
+        if(select){
+            // Agregar un evento de cambio al desplegable
+            select.addEventListener("change", () => {
+                    // Cuando se selecciona una provincia, aquí puedes llamar a una función para modificar la información de hoy y mañana
+                    // Puedes acceder al valor seleccionado con provinciasSelect.value
+                    let selectedMunicipio = select.value;
+                    
+                    // Aquí deberías llamar a una función para actualizar la información según la provincia seleccionada
+                    updateDataMunicipio(selectedMunicipio,selectedProvince);
+                });
+        }
+            
+           
+
+        } catch (error) {
+            console.log('Error:', error);
+        }
+    }
+
+    function deleteMunicipios(selectedPorvince){
+        let select = document.getElementById("municipios");
+        select.remove();
+        addMunicipios(selectedPorvince);
+    }
+
+    
+    //--------------------------------SIN TERMINAR--------------------------------------
+
+    async function updateDataMunicipio(selectedMunicipio,selectedProvince){
+        try {
+        let url = `https://www.el-tiempo.net/api/json/v2/provincias/${selectedProvince}/municipios/${selectedMunicipio}`;
+       
+        console.log(selectedMunicipio + " - " + selectedProvince);
+         let response = await fetch(url, requestOptions);
+         let json = await response.json();
+
+        
+         weather.innerHTML = "";
+         weather.innerText = json.metadescripcion;
+        // let pToday = document.getElementsByName("todayParragraph");
+        // let pTomorrow = document.getElementsByName("tomorrowParragraph");
+        // let todayJson = json.today.p;
+        // let tomorrowJson = json.tomorrow.p;
+
+        // //Elimino la información que había antes en today
+        // pToday.forEach(e => {e.innerHTML = ""});
+        // //Añado la nueva info
+        // pToday[0].innerHTML = todayJson;
+
+        // pTomorrow.forEach(e => {e.innerHTML = ""});
+        // pTomorrow[0].innerHTML = tomorrowJson;
         
 
     } catch (error) {
