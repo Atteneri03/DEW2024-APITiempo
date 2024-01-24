@@ -35,8 +35,8 @@
         let weather = document.getElementById("weather");
 
         var requestOptions = {
-                method: 'GET',
-                redirect: 'follow'
+            method: 'GET',
+            redirect: 'follow'
             };
 
         //POSTMAN
@@ -92,7 +92,7 @@
             let todayResponse = json.today.p;
             let tomorrowResponse = json.tomorrow.p;
 
-            
+            //añado la info de hoy
             todayResponse.forEach(data => {
                 let p = document.createElement("p");
                 p.innerHTML = data;
@@ -101,6 +101,7 @@
             
             });
 
+            //añado la info de mañana
             tomorrowResponse.forEach(data => {
                 let p = document.createElement("p");
                 p.innerHTML = data;
@@ -110,13 +111,12 @@
             });
 
 
-
-
         } catch (error) {
             console.log('Error:', error);
         }
     }
 
+    //Actualizar datos según la provincia
     async function updateDataProvince(selectedPorvince){
         try {
         let url = "https://www.el-tiempo.net/api/json/v2/provincias/" + selectedPorvince;
@@ -147,6 +147,7 @@
     }
     }
 
+    //Creo el despleagable de municipios según la provincia
     async function addMunicipios(selectedProvince){
         try {
             let url = "https://www.el-tiempo.net/api/json/v2/provincias/" + selectedProvince + "/municipios";
@@ -156,14 +157,15 @@
             let response = await fetch(url, requestOptions);
             let json = await response.json();
 
+            //Creo el select
            let municipiosJson = json.municipios;
            let div = document.getElementsByName("selects")[0];
            let select = document.createElement("select");
            select.setAttribute("id","municipios");
            div.appendChild(select);
 
+           //Añado los municipios al select
            municipiosJson.forEach(municipio => {
-
              let op = document.createElement("option");
              op.value = municipio.COD_GEO;
              op.innerText = municipio.NOMBRE;
@@ -189,38 +191,46 @@
         }
     }
 
+    //Elimino los datos del despleagable de municipios, para insertar los nuevos
     function deleteMunicipios(selectedPorvince){
         let select = document.getElementById("municipios");
         select.remove();
         addMunicipios(selectedPorvince);
     }
 
-    
-    //--------------------------------SIN TERMINAR--------------------------------------
-
+  
+    //Actualizar la información que se muestra dependiendo de la provincia
     async function updateDataMunicipio(selectedMunicipio,selectedProvince){
         try {
-        let url = `https://www.el-tiempo.net/api/json/v2/provincias/${selectedProvince}/municipios/${selectedMunicipio}`;
+        let url = 'https://www.el-tiempo.net/api/json/v2/provincias/' + selectedProvince + '/municipios/' + selectedMunicipio;
        
-        console.log(selectedMunicipio + " - " + selectedProvince);
+        
          let response = await fetch(url, requestOptions);
          let json = await response.json();
 
-        
+
          weather.innerHTML = "";
          weather.innerText = json.metadescripcion;
-        // let pToday = document.getElementsByName("todayParragraph");
-        // let pTomorrow = document.getElementsByName("tomorrowParragraph");
-        // let todayJson = json.today.p;
-        // let tomorrowJson = json.tomorrow.p;
+         let pToday = document.getElementsByName("todayParragraph");
+         let pTomorrow = document.getElementsByName("tomorrowParragraph");
+         let todayMaxJson = json.temperaturas.max;
+         let todayMinJson = json.temperaturas.min;
 
-        // //Elimino la información que había antes en today
-        // pToday.forEach(e => {e.innerHTML = ""});
-        // //Añado la nueva info
-        // pToday[0].innerHTML = todayJson;
+         let tomorrowMaxJson = json.proximos_dias[0].temperatura.maxima;
+         let tomorrowMinJson = json.proximos_dias[0].temperatura.minima;
+         let stateSky = json.stateSky.description;
+         let actualTemp = json.temperatura_actual;
 
-        // pTomorrow.forEach(e => {e.innerHTML = ""});
-        // pTomorrow[0].innerHTML = tomorrowJson;
+
+         console.log("Maxima de hoy: " + todayMaxJson + ", Minima de hoy: " + todayMinJson + `, Maxima de mañana: ${tomorrowMaxJson} , Minima de mañana:  ${tomorrowMinJson} `);
+
+        //Elimino la información que había antes en today
+        pToday.forEach(e => {e.innerHTML = ""});
+        //Añado la nueva info
+        pToday[0].innerHTML = stateSky  + " " + actualTemp + "°C (max: " + todayMaxJson + "°C | min: " + todayMinJson + "°C)";
+
+        pTomorrow.forEach(e => {e.innerHTML = ""});
+        pTomorrow[0].innerHTML = "(max: " + tomorrowMaxJson + "°C | min: " + tomorrowMinJson + "°C)";
         
 
     } catch (error) {
